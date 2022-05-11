@@ -13,6 +13,16 @@ use mdbook::{
     //config::Config,
 };
 
+mod serve;
+use serve::spawn_server;
+
+
+//const VERSION: &str = concat!("v", crate_version!());
+
+const DEFAULT_SOURCE_DIR: &str = "bookshelf";
+const DEFAULT_BUILD_DIR: &str = "build";
+
+
 
 ///Enume indicating the type of book and path to it's source info
 enum BookType {
@@ -157,4 +167,8 @@ fn main() {
         }
     }
     
+    spawn_server("./build".to_string(), "127.0.0.1", "3000");
+    loop{}
 }
+
+

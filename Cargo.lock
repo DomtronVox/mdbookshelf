@@ -793,8 +793,13 @@ dependencies = [
 name = "mdbookshelf"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "futures-util",
  "mdbook",
+ "tokio",
+ "toml",
  "walkdir",
+ "warp",
 ]
 
 [[package]]
