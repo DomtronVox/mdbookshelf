@@ -1,0 +1,10 @@
+<html>
+
+<h1> Welcome to the shelf.</h1>
+
+<ul>
+{{#each books}}
+    <li><p><a href="/{{../meta.book_dir}}/{{this.partial_path}}/">{{this.title}}</a></p></li>
+{{/each}}
+</ul>
+</html>

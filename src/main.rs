@@ -1,5 +1,5 @@
 use std::{
-    path::{PathBuf, Component},
+    path::{PathBuf, MAIN_SEPARATOR},
     fs,
 };
 
@@ -13,6 +13,11 @@ use mdbook::{
     //config::Config,
 };
 
+use serde::Serialize;
+
+mod index_theme;
+use index_theme::render_index;
+
 mod serve;
 use serve::spawn_server;
 
@@ -24,10 +29,24 @@ const DEFAULT_BUILD_DIR: &str = "build";
 
 
 ///Enum indicating the type of book.
-#[derive(PartialEq)]
-enum BookType {
+#[derive(Serialize, PartialEq)]
+pub enum BookType {
     MDBook,
     PDF,
+}
+
+
+///Struct with data about a single book
+#[derive(Serialize)]
+pub struct BookMetadata {
+    pub book_type: BookType,
+    
+    pub title: String,
+    pub description: String,
+    
+    pub source_path: PathBuf,
+    pub partial_path: PathBuf, //path isolated from src or target directory
+    pub build_path: PathBuf,
 }
 
 
@@ -56,7 +75,7 @@ fn is_book(entry: &DirEntry) -> Option<BookType> {
 
 ///Walks a given path looking for either PDFs or book.tomel files
 fn find_books(path: &PathBuf) -> Vec<(BookType, PathBuf)> {
-    let mut book_list = vec!();
+    let mut search_results = vec!();
 
     //build the iterator so we can start the dir walk
     let mut it = WalkDir::new(path).into_iter();
@@ -99,10 +118,10 @@ fn find_books(path: &PathBuf) -> Vec<(BookType, PathBuf)> {
                 entry.path().to_path_buf(),
         };
         
-        book_list.push( (book_type, source_path) );
+        search_results.push( (book_type, source_path) );
     }
     
-    book_list
+    search_results
 }
 
 ///strips out everything from path before the source folder. 
@@ -138,54 +157,81 @@ fn main() {
     let source_path = std::env::current_dir().unwrap().join("bookshelf");
     let build_path = std::env::current_dir().unwrap().join("build");
     
-    //compile list of books
-    let book_list = find_books(&source_path);
+    //holds metadata on each book for the library generator
+    let mut book_list = vec!();
     
     //process books by either copying files or triggering MDBook builds
-    for book in book_list {
+    for book in find_books(&source_path) {
         //just to be clear
         let book_type = book.0;
         let book_source_path = book.1;
         
         //get the part of the path unique to the source directory. We use this same relative
         // path when placing stuff in the build dir.
-        let path_part = isolate_partial_path(&book_source_path, &source_path).unwrap();
+        let partial_path = isolate_partial_path(&book_source_path, &source_path).unwrap();
 
         //location to place the book.
-        let book_build_path = build_path.join("bookshelf").join(path_part);
+        let book_build_path = build_path.join("bookshelf").join(&partial_path);
+        
+        //some book metadata
+        let mut title = book_source_path.file_name().unwrap().to_os_string().into_string().unwrap();
+        let mut description = "".to_string();
         
         match book_type {
         
             BookType::MDBook => {
             
-                println!("MDBook source {}, building into {}", book_source_path.display(), book_build_path.display());
+                println!("> MDBook source {}, building into {}\n", book_source_path.display(), book_build_path.display());
             
                 //create book object from path which has the book.tomel and all needed info
                 let mut md = MDBook::load(&book_source_path)
                     .expect("Unable to load the book");
                 
                 //we need to set the output to be inside the buildpath /bookshelf directory 
-                md.config.build.build_dir = book_build_path;
-
+                md.config.set( "build.build_dir", book_build_path.clone() );
+                
                 //Try to build the book
                 md.build().expect("Building failed");
+                
+                //pull some data from the mdbook config
+                title = md.config.book.title.unwrap_or(title);
+                description = md.config.book.description.unwrap_or("".to_string()).clone();
             
             },
         
             BookType::PDF => {
-                println!("PDF source {}, copying into {}", book_source_path.display(), book_build_path.display());
-            
+                println!("> PDF source {}, copying into {}\n", book_source_path.display(), book_build_path.display());
+                
+                //get a directory only path so we can make sure all directories up to the needed one exist
                 let mut directory_only = book_build_path.clone();
                 directory_only.pop();
-                println!("{}", directory_only.display());
-                println!("{:?}", fs::create_dir_all(directory_only));
-                println!("{:?}", fs::copy(&book_source_path, &book_build_path));
+                fs::create_dir_all(directory_only)
+                    .map_err(|err| println!("{:#?}", err));
+
+                //copy the file over
+                fs::copy(&book_source_path, &book_build_path)
+                    .map_err(|err| println!("{:#?}", err));
             },
         }
+        
+        //create metadata object we will need to populate the index template
+        book_list.push(
+            BookMetadata {
+                book_type,
+                title, description,
+                
+                source_path: book_source_path,
+                partial_path,
+                build_path: book_build_path,
+            }
+        );
     }
     
-    //spawn_server("./build".to_string(), "127.0.0.1", "3000");
-    //loop{}
+    render_index(&build_path, book_list);
+    
+    spawn_server("./build".to_string(), "127.0.0.1", "3000");
+    println!("Serving at http://127.0.0.1:3000/ ");
+    loop{}
 }
 
 
