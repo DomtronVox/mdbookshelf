@@ -6,11 +6,15 @@ use handlebars::Handlebars;
 use serde_json::json;
 
 
-use crate::BookMetadata;
+use crate::book::BookMetadata;
 
 
 //load in files so they are embeded into the binary.
+//>Templates
 pub static INDEX: &[u8] = include_bytes!("index.hbs");
+
+//>files (CSS images etc)
+pub static STYLESHEET: &[u8] = include_bytes!("core_style.css");
 
 
 //render the index.html file from data and the template
