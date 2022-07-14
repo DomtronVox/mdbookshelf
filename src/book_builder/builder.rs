@@ -1,5 +1,5 @@
 use std::{
-    path::{PathBuf, MAIN_SEPARATOR},
+    path::PathBuf,
     fs,
 };
 

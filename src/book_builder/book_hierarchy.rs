@@ -1,12 +1,9 @@
 
-use std::{
-    collections::HashMap,
-    path::Component,
-};
+use std::collections::HashMap;
 
 
 
-use crate::book::{BookMetadata, HierarchyType, BookshelfMetadata};
+use crate::book::{BookMetadata, HierarchyType};
 
 
 
@@ -20,11 +17,14 @@ pub fn compile_hierarchy(books_metadata: Vec<BookMetadata>) -> HierarchyType {
         let mut current_container = &mut book_sort;
         
         //build list of String components, each is considered a Hierarchy level
-        let components: Vec<String> = 
+        let mut components: Vec<String> = 
             metadata.partial_path
                 .components()
                 .map(|comp| comp.as_os_str().to_str().unwrap().to_string() )
                 .collect();
+                
+        //we need to remove the last component as it is always related to the book itself (eith filename or unique folder)
+        components.pop();
         
         for level in components {
             //access hashmap

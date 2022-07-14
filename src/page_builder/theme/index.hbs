@@ -1,0 +1,48 @@
+
+{{! This partial helps us delve into the arbetarily nested book data}}
+{{#*inline "shelf_builder"}}
+    {{#each this}}
+
+        {{! See if this is a book or just another shelf. }}
+        {{#if book_type }}
+            <div class="book">
+                <a href="/{{@root.bookshelf_directory}}/{{this.partial_path}}/"> {{this.title}} </a>
+            </div>
+
+        {{else}}
+            <div class="subshelf">
+                <h2 class="shelf_title"> {{@key}} </h2>
+                
+                {{! Since it's another shelf we have to delve deeper}}
+                {{> shelf_builder this }}
+
+            </div>
+        {{/if}}
+
+    {{/each}}
+{{/inline}}
+
+
+
+{{! Start the actual template }}
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="/core_style.css" />
+</head>
+
+<body>
+
+    <div id="title_area">
+        <h1 id="main_title"> Welcome to the shelf.</h1>
+    </div>
+    
+    <div id="wrapper">
+    
+        {{> shelf_builder books }}
+    
+    </div>
+
+</body>
+
+</html>

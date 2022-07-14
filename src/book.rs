@@ -8,7 +8,7 @@ use serde::Serialize;
 
 
 ///Enum indicating the type of book.
-#[derive(Serialize, PartialEq)]
+#[derive(Debug, Serialize, PartialEq)]
 pub enum BookType {
     MDBook,
     PDF,
@@ -16,7 +16,7 @@ pub enum BookType {
 
 
 ///Struct with data about a single book
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BookMetadata {
     pub book_type: BookType,
     
@@ -28,14 +28,15 @@ pub struct BookMetadata {
     pub build_path: PathBuf,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
+#[serde(untagged)]
 pub enum HierarchyType {
     Section(HashMap<String, HierarchyType>),
     Book(BookMetadata),
 }
 
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BookshelfMetadata {
     pub source_directory: PathBuf,
     pub build_directory: PathBuf,
