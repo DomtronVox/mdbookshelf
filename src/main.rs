@@ -22,16 +22,17 @@ use serve::spawn_server;
 
 fn main() {
     //figure out the root source and build paths and define the bookshelf directory
-    let source_path = std::env::current_dir().unwrap().join("bookshelf");
-    let build_path = std::env::current_dir().unwrap().join("build");
+    //>Note pushing "" forces PathBuf to add a trailing /. only easy way I could find to do it.
     let bookshelf_directory = PathBuf::from("bookshelf");
+    let source_path = std::env::current_dir().unwrap().join(&bookshelf_directory).join("");
+    let build_path = std::env::current_dir().unwrap().join("build").join("");
     
     let bookshelf_metadata = build_bookshelf(source_path, build_path, bookshelf_directory);
     
     build_pages(bookshelf_metadata);
     
     spawn_server("./build".to_string(), "127.0.0.1", "3000");
-    println!("Serving at http://127.0.0.1:3000/ ");
+    println!("Serving at http://127.0.0.1:3000/");
     loop{}
 }
 

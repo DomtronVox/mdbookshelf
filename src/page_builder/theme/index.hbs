@@ -6,7 +6,7 @@
         {{! See if this is a book or just another shelf. }}
         {{#if book_type }}
             <div class="book">
-                <a href="/{{@root.bookshelf_directory}}/{{this.partial_path}}/"> {{this.title}} </a>
+                <a href="/{{@root.bookshelf_directory}}/{{this.partial_path}}"> {{this.title}} </a>
             </div>
 
         {{else}}

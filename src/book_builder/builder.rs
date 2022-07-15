@@ -50,42 +50,49 @@ pub fn build_books(books_index: Vec<(BookType, PathBuf)>,
     for book in books_index {
         //just to be clear what's what
         let book_type = book.0;
-        let book_source_path = book.1;
+        let mut book_source_path = book.1;
         
         //get the part of the path unique to the source directory. We use this same relative
         // path when placing stuff in the build dir.
-        let partial_path = isolate_partial_path(&book_source_path, &source_path).unwrap();
+        let mut partial_path = isolate_partial_path(&book_source_path, &source_path).unwrap();
 
         //location to place the book.
-        let book_build_path = build_path.join(&bookshelf_directory).join(&partial_path);
+        let mut book_build_path = build_path.join(&bookshelf_directory).join(&partial_path);
         
         //some book metadata
-        let mut title = book_source_path.file_name().unwrap().to_os_string().into_string().unwrap();
+        let mut title = "".to_string();
         let mut description = "".to_string();
         
         match book_type {
         
             BookType::MDBook => {
-            
+                //Really dumb but this is the only way I could find to add a trailing slash easily
+                //Need a trailing slash since the MDBook messes up the web template links otherwise
+                //Add it to all 3 just to be consistant.
+                book_source_path.push("");
+                book_build_path.push("");
+                partial_path.push("");
+                
                 println!("> MDBook source {}, building into {}\n", book_source_path.display(), book_build_path.display());
-            
+                
                 //create book object from path which has the book.tomel and all needed info
                 let mut md = MDBook::load(&book_source_path)
                     .expect("Unable to load the book");
                 
                 //we need to set the output to be inside the books individual build directory 
-                md.config.set( "build.build_dir", book_build_path.clone() );
+                md.config.build.build_dir = book_build_path.clone();
                 
                 //Try to build the book
                 md.build().expect("Building failed");
                 
                 //pull some data from the mdbook config
-                title = md.config.book.title.unwrap_or(title);
+                title = md.config.book.title.expect("MDBook missing title somehow.");
                 description = md.config.book.description.unwrap_or("".to_string()).clone();
             
             },
         
             BookType::PDF => {
+                
                 println!("> PDF source {}, copying into {}\n", book_source_path.display(), book_build_path.display());
                 
                 //get a directory only path so we can make sure all directories up to the needed one exist
@@ -97,6 +104,8 @@ pub fn build_books(books_index: Vec<(BookType, PathBuf)>,
                 //copy the file over
                 fs::copy(&book_source_path, &book_build_path)
                     .map_err(|err| println!("{:#?}", err));
+                    
+                title = book_source_path.file_stem().unwrap().to_os_string().into_string().unwrap();
             },
         }
         

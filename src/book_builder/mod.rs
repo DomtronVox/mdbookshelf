@@ -4,8 +4,8 @@ pub use indexer::index_books;
 mod builder;
 pub use builder::build_books;
 
-mod book_hierarchy;
-pub use book_hierarchy::compile_hierarchy;
+mod hierarchy;
+pub use hierarchy::compile_hierarchy;
 
 
 use std::path::PathBuf;

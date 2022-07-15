@@ -26,7 +26,7 @@ pub fn render_index(metadata: &BookshelfMetadata) {
     data.insert("bookshelf_directory", json!(metadata.bookshelf_directory));
     data.insert("books",    json!(metadata.book_hierarchy));
     
-
+    println!("Template Data report: {:#?}", data);
     let file_render = handlebars.render("index", &data)
                         .expect("Error parsing string.");
     
@@ -36,6 +36,7 @@ pub fn render_index(metadata: &BookshelfMetadata) {
 
 
 pub fn build_pages(data: BookshelfMetadata) {
+    
     
     //copy files over
     for (filename, file_data) in vec!(STYLESHEET) {
