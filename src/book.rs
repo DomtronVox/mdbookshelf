@@ -28,11 +28,12 @@ pub struct BookMetadata {
     pub build_path: PathBuf,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(untagged)]
-pub enum HierarchyType {
-    Section(HashMap<String, HierarchyType>),
-    Book(BookMetadata),
+#[derive(Debug, Default, Serialize)]
+//#[serde(untagged)]
+pub struct HierarchySection {
+    pub name: String,
+    pub books: Vec<BookMetadata>,
+    pub sub_sections: HashMap<String, HierarchySection>,
 }
 
 
@@ -42,7 +43,7 @@ pub struct BookshelfMetadata {
     pub build_directory: PathBuf,
     pub bookshelf_directory: PathBuf,
 
-    pub book_hierarchy: HierarchyType,
+    pub book_hierarchy: HierarchySection,
     
 }
 

@@ -3,13 +3,13 @@ use std::collections::HashMap;
 
 
 
-use crate::book::{BookMetadata, HierarchyType};
+use crate::book::{BookMetadata, HierarchySection};
 
 
 
-pub fn compile_hierarchy(books_metadata: Vec<BookMetadata>) -> HierarchyType {
+pub fn compile_hierarchy(books_metadata: Vec<BookMetadata>) -> HierarchySection {
     
-    let mut book_sort = HierarchyType::Section( HashMap::new() );
+    let mut book_sort = HierarchySection::default();
     
     //process each book
     for metadata in books_metadata {
@@ -27,27 +27,23 @@ pub fn compile_hierarchy(books_metadata: Vec<BookMetadata>) -> HierarchyType {
         components.pop();
         
         for level in components {
-            //access hashmap
-            if let HierarchyType::Section(hashmap) = current_container {
                 
-                //create shelf entry if this is the first time we have seen this shelf
-                if ! hashmap.contains_key(&level) {
-                    hashmap.insert( level.clone(), HierarchyType::Section( HashMap::new() ) );
-                }
-                
-                
-                //shift the level down one
-                current_container = hashmap.get_mut(&level).unwrap(); //the above check ensures this will work
-                
-            } else {
-                println!("Error: Bug has occured. This prompt should not have been possible to print.");
+            //create shelf entry if this is the first time we have seen this shelf
+            if ! current_container.sub_sections.contains_key(&level) {
+                let mut new_section = HierarchySection::default();
+                new_section.name = level.clone();
+                current_container.sub_sections.insert( level.clone(), new_section );
             }
+                
+                
+            //shift the level down one
+            //Note: the above check ensures this unwrap will work
+            current_container = current_container.sub_sections.get_mut(&level).unwrap(); 
+                
         }
         
         //set book metadata at the lowest level
-        if let HierarchyType::Section(hashmap) = current_container {
-            hashmap.insert( metadata.title.clone(), HierarchyType::Book(metadata) );
-        }
+        current_container.books.push( metadata );
     }
     
     book_sort

@@ -24,7 +24,7 @@ pub fn render_index(metadata: &BookshelfMetadata) {
     data.insert("source_directory",    json!(metadata.source_directory));
     data.insert("build_directory",     json!(metadata.build_directory));
     data.insert("bookshelf_directory", json!(metadata.bookshelf_directory));
-    data.insert("books",    json!(metadata.book_hierarchy));
+    data.insert("hierarchy",    json!(metadata.book_hierarchy));
     
     println!("Template Data report: {:#?}", data);
     let file_render = handlebars.render("index", &data)

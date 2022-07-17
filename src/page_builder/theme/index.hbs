@@ -1,25 +1,35 @@
 
 {{! This partial helps us delve into the arbetarily nested book data}}
 {{#*inline "shelf_builder"}}
-    {{#each this}}
+    <div class="subshelf">
+        
+        <h2 class="shelf_title"> {{this.name}} </h2>
+        
+        <div class="shelf_contents">
+            {{#if this.books}}
+            <div class="shelf_books">
 
-        {{! See if this is a book or just another shelf. }}
-        {{#if book_type }}
-            <div class="book">
-                <a href="/{{@root.bookshelf_directory}}/{{this.partial_path}}"> {{this.title}} </a>
+                {{#each this.books}}
+                <div class="book">
+                    <p>{{this.title}}</p>
+                    <a href="/{{@root.bookshelf_directory}}/{{this.partial_path}}">  
+                        <span class="link"></span>
+                    </a>
+                </div>
+                {{/each}}
+                    
             </div>
-
-        {{else}}
-            <div class="subshelf">
-                <h2 class="shelf_title"> {{@key}} </h2>
-                
-                {{! Since it's another shelf we have to delve deeper}}
+            {{/if}}
+            
+            {{#if this.sub_sections}}
+            <div class="shelf_sections">
+                {{#each this.sub_sections}}
                 {{> shelf_builder this }}
-
+                {{/each}}
             </div>
-        {{/if}}
-
-    {{/each}}
+            {{/if}}
+        </div>
+    </div>
 {{/inline}}
 
 
@@ -28,7 +38,7 @@
 <html>
 
 <head>
-    <link rel="stylesheet" type="text/css" href="/core_style.css" />
+    <link rel="stylesheet" type="text/css" href="/functional.css" />
 </head>
 
 <body>
@@ -38,8 +48,9 @@
     </div>
     
     <div id="wrapper">
-    
-        {{> shelf_builder books }}
+        {{#each hierarchy.sub_sections}}
+            {{> shelf_builder this }}
+        {{/each}}
     
     </div>
 
