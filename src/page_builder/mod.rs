@@ -39,7 +39,7 @@ pub fn build_pages(data: BookshelfMetadata) {
     
     
     //copy files over
-    for (filename, file_data) in vec!(STYLESHEET) {
+    for (filename, file_data) in vec!(FUNCTIONAL_STYLESHEET, DARK_STYLESHEET) {
         fs::write( format!("{}", data.build_directory.join(filename).display()).as_str(), file_data );
     }
     

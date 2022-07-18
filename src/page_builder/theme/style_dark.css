@@ -1,0 +1,24 @@
+body {
+    background-color: rgb(30,30,30);
+    color: rgb(200,200,200);
+}
+
+.shelf_title {
+    background-color: rgb(38 37 37);
+    border-color: rgb(20,20,20);
+}
+
+.shelf_contents {
+    background-color: rgb(38 37 37);
+    border-color: rgb(20,20,20);
+}
+
+
+.book {
+    background-color: rgb(47 49 52);
+    border-color: rgb(20,20,20);
+}
+
+.book:hover {
+    background-color: rgb(57 59 62);
+}
