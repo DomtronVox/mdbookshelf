@@ -3,6 +3,7 @@ use std::{
     fs,
 };
 
+use log;
 
 use mdbook::{
     MDBook,
@@ -59,11 +60,8 @@ pub fn build_books(books_index: Vec<(BookType, PathBuf)>,
         //location to place the book.
         let mut book_build_path = build_path.join(&bookshelf_directory).join(&partial_path);
         
-        //some book metadata
-        let mut title = "".to_string();
-        let mut description = "".to_string();
-        
-        match book_type {
+        //based on book type we build the book then return title and description metadata
+        let (title, description) = match book_type {
         
             BookType::MDBook => {
                 //Really dumb but this is the only way I could find to add a trailing slash easily
@@ -73,7 +71,9 @@ pub fn build_books(books_index: Vec<(BookType, PathBuf)>,
                 book_build_path.push("");
                 partial_path.push("");
                 
-                println!("> MDBook source {}, building into {}\n", book_source_path.display(), book_build_path.display());
+                log::info!("Bulding MDBook \"{}\"", partial_path.display());
+                log::debug!("> MDBook source {}, building into {}\n", 
+                            book_source_path.display(), book_build_path.display());
                 
                 //create book object from path which has the book.tomel and all needed info
                 let mut md = MDBook::load(&book_source_path)
@@ -86,28 +86,34 @@ pub fn build_books(books_index: Vec<(BookType, PathBuf)>,
                 md.build().expect("Building failed");
                 
                 //pull some data from the mdbook config
-                title = md.config.book.title.expect("MDBook missing title somehow.");
-                description = md.config.book.description.unwrap_or("".to_string()).clone();
-            
+                let title = md.config.book.title.expect("MDBook missing title somehow.");
+                let description = md.config.book.description.unwrap_or("".to_string()).clone();
+                
+                (title, description)
             },
         
             BookType::PDF => {
-                
-                println!("> PDF source {}, copying into {}\n", book_source_path.display(), book_build_path.display());
+                log::info!("Bulding PDF \"{}\"", partial_path.display());
+                log::debug!("> PDF source {}, copying into {}\n", book_source_path.display(), book_build_path.display());
                 
                 //get a directory only path so we can make sure all directories up to the needed one exist
                 let mut directory_only = book_build_path.clone();
                 directory_only.pop();
-                fs::create_dir_all(directory_only)
-                    .map_err(|err| println!("{:#?}", err));
+                
+                if let Result::Err(err) = fs::create_dir_all(directory_only) {
+                    log::error!("{:#?}", err);
+                }
 
                 //copy the file over
-                fs::copy(&book_source_path, &book_build_path)
-                    .map_err(|err| println!("{:#?}", err));
+                if let Result::Err(err) = fs::copy(&book_source_path, &book_build_path) {
+                    log::error!("{:#?}", err);
+                }
                     
-                title = book_source_path.file_stem().unwrap().to_os_string().into_string().unwrap();
+                let title = book_source_path.file_stem().unwrap().to_os_string().into_string().unwrap();
+
+                ( title, "".to_string() )
             },
-        }
+        };
         
         //create metadata object we will need to populate the index template
         books_metadata.push(

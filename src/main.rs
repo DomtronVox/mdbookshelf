@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use log;
+
 
 mod book;
 
@@ -21,6 +23,10 @@ use serve::spawn_server;
 
 
 fn main() {
+    //setup logging
+    simple_logger::init_with_level(log::Level::Info).unwrap();
+
+
     //figure out the root source and build paths and define the bookshelf directory
     //>Note pushing "" forces PathBuf to add a trailing /. only easy way I could find to do it.
     let bookshelf_directory = PathBuf::from("bookshelf");
@@ -32,7 +38,6 @@ fn main() {
     build_pages(bookshelf_metadata);
     
     spawn_server("./build".to_string(), "127.0.0.1", "3000");
-    println!("Serving at http://127.0.0.1:3000/");
     loop{}
 }
 

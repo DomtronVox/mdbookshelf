@@ -7,6 +7,7 @@ use futures_util::StreamExt;
 use std::net::{SocketAddr, ToSocketAddrs};
 use warp::ws::Message;
 use warp::Filter;
+use log;
 
 /// The HTTP endpoint for the websocket used to trigger reloads when a file changes.
 const LIVE_RELOAD_ENDPOINT: &str = "__livereload";
@@ -35,12 +36,12 @@ pub fn spawn_server(build_dir: String, hostname: &str, port: &str) {
     let (tx, _rx) = tokio::sync::broadcast::channel::<Message>(100);
 
     let reload_tx = tx.clone();
-    let thread_handle = std::thread::spawn(move || {
+    let _thread_handle = std::thread::spawn(move || {
         serve(PathBuf::from(build_dir), sockaddr, reload_tx, "error404.html");
     });
 
     let serving_url = format!("http://{}", address);
-    //info!("Serving on: {}", serving_url);
+    log::info!("Serving on: {}", serving_url);
 }
 
 
@@ -64,9 +65,9 @@ async fn serve(
         .map(|ws: warp::ws::Ws, mut rx: broadcast::Receiver<Message>| {
             ws.on_upgrade(move |ws| async move {
                 let (mut user_ws_tx, _user_ws_rx) = ws.split();
-                //trace!("websocket got connection");
+                log::trace!("websocket got connection");
                 if let Ok(m) = rx.recv().await {
-                    //trace!("notify of reload");
+                    log::trace!("notify of reload");
                     let _ = user_ws_tx.send(m).await;
                 }
             })
@@ -80,7 +81,7 @@ async fn serve(
 
     std::panic::set_hook(Box::new(move |panic_info| {
         // exit if serve panics
-        //error!("Unable to serve: {}", panic_info);
+        log::error!("Unable to serve: {}", panic_info);
         std::process::exit(1);
     }));
 

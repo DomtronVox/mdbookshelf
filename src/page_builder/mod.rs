@@ -2,6 +2,8 @@ use std::fs;
 //use std::io::Read;
 //use std::path::PathBuf;
 
+use log;
+
 use handlebars::Handlebars;
 use serde_json::json;
 
@@ -16,7 +18,10 @@ use crate::book::BookshelfMetadata;
 pub fn render_index(metadata: &BookshelfMetadata) {
     let mut handlebars = Handlebars::new();
     
-    handlebars.register_template_string("index", &String::from_utf8_lossy(INDEX));
+    if let Result::Err(err) = handlebars.register_template_string("index", &String::from_utf8_lossy(INDEX)) {
+        log::error!("{}", err);
+        panic!("Error registering template. See log.");
+    }
     
     let mut data = std::collections::HashMap::new();
 
@@ -26,11 +31,15 @@ pub fn render_index(metadata: &BookshelfMetadata) {
     data.insert("bookshelf_directory", json!(metadata.bookshelf_directory));
     data.insert("hierarchy",    json!(metadata.book_hierarchy));
     
-    println!("Template Data report: {:#?}", data);
+    log::debug!("Template Data report: {:#?}", data);
     let file_render = handlebars.render("index", &data)
-                        .expect("Error parsing string.");
+                        .expect("Handlebars encountered an error rendering the template from our data.");
     
-    fs::write( format!("{}/{}", metadata.build_directory.display(), "index.html").as_str(), file_render.as_str()).unwrap();
+    if let Result::Err(err) = 
+      fs::write( format!("{}/{}", metadata.build_directory.display(), "index.html").as_str(), file_render.as_str()) {
+        log::error!("{}", err);
+        panic!("Error building template. See log.");
+    }
 
 }
 
@@ -40,7 +49,11 @@ pub fn build_pages(data: BookshelfMetadata) {
     
     //copy files over
     for (filename, file_data) in vec!(FUNCTIONAL_STYLESHEET, DARK_STYLESHEET) {
-        fs::write( format!("{}", data.build_directory.join(filename).display()).as_str(), file_data );
+        if let Result::Err(err) = 
+          fs::write( format!("{}", data.build_directory.join(filename).display()).as_str(), file_data ) {
+            log::error!("{}", err);
+            panic!("Error copying files into build directory. See log.");
+        }
     }
     
     //process template files to build pages
