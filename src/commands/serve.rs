@@ -1,13 +1,42 @@
 //More or less copied from mdbook cmd/serve.rs
 
 use std::path::PathBuf;
+use std::net::{SocketAddr, ToSocketAddrs};
+
+
+use clap::{Command, ArgMatches};
+
 use tokio::sync::broadcast;
 use futures_util::sink::SinkExt;
 use futures_util::StreamExt;
-use std::net::{SocketAddr, ToSocketAddrs};
 use warp::ws::Message;
 use warp::Filter;
+
 use log;
+
+use super::build::build_bookshelf_cmd;
+
+
+// Create clap subcommand arguments
+pub fn make_subcommand_serve<'help>() -> Command<'help> {
+    Command::new("serve")
+        .about("Serves the bookshelf at http://localhost:3000")
+}
+
+// Serve command implementation
+pub fn execute_serve(_args: &ArgMatches) -> Result<(), anyhow::Error> {
+
+    build_bookshelf_cmd();
+
+    spawn_server("./build".to_string(), "127.0.0.1", "3000");
+
+    
+    //loop{} //loop until Ctrl+C is ran.
+
+    Ok(())
+}
+
+
 
 /// The HTTP endpoint for the websocket used to trigger reloads when a file changes.
 const LIVE_RELOAD_ENDPOINT: &str = "__livereload";
@@ -36,12 +65,17 @@ pub fn spawn_server(build_dir: String, hostname: &str, port: &str) {
     let (tx, _rx) = tokio::sync::broadcast::channel::<Message>(100);
 
     let reload_tx = tx.clone();
-    let _thread_handle = std::thread::spawn(move || {
+    let thread_handle = std::thread::spawn(move || {
         serve(PathBuf::from(build_dir), sockaddr, reload_tx, "error404.html");
     });
 
     let serving_url = format!("http://{}", address);
     log::info!("Serving on: {}", serving_url);
+    
+    //wait forever until program is closed with Ctrl+C
+    if let Result::Err(err) = thread_handle.join() {
+        log::error!("Error occured with server thread: {:?}", err);
+    }
 }
 
 
